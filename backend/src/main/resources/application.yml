@@ -1,0 +1,41 @@
+server-port: 8081
+
+spring:
+  jackson:
+    time-zone: 'Europe/Rome'
+    date-format: 'dd-MM-yyyy HH:mm:ss'
+  mvc:
+    format:
+      date: 'dd-MM-yyyy'
+      date-time: 'dd-MM-yyyy HH:mm:ss'
+    favicon:
+      enabled: false
+  web:
+    resources:
+      add-mappings: false
+  application:
+    name: 2auth-backend
+  data:
+    mongodb:
+      database: 2Auth
+      port: 27017
+      host: localhost
+
+server:
+  port: ${server-port}
+  error:
+    path: "/error_Lg-aieD1zPiG1_L2D6Wwe_avS2I-Avjrq5I8-"
+    whitelabel:
+      enabled: false
+    include-path: never
+  ssl:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        boot: INFO
+        security: INFO
+        web: INFO

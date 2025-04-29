@@ -1,0 +1,45 @@
+# Custom properties to ease configuration overrides
+# on command-line or IDE launch configurations
+port: 8080
+backend-port: 8081
+backend-domain: localhost
+allowedOrigins: "*"
+
+server:
+  port: ${port}
+  error:
+    whitelabel:
+      enabled: false
+  ssl:
+    enabled: false
+
+spring:
+  mvc:
+    favicon:
+      enabled: false
+  web:
+    resources:
+      add-mappings: false
+  application:
+    name: 2auth-api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: backend
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/**
+          filters:
+            - JwtTokenRelay
+            - LogoutIfUnauthorized
+            - StripPrefix=1
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        boot: INFO
+        security: INFO
+        web: INFO
