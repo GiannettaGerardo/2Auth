@@ -2,8 +2,9 @@ package twoauth.apigateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
 
-@SpringBootApplication // TODO (exclude = { ReactiveUserDetailsServiceAutoConfiguration.class })
+@SpringBootApplication(exclude = { ReactiveUserDetailsServiceAutoConfiguration.class })
 public class TwoAuthApiGatewayApplication {
 
 	public static void main(String[] args) {

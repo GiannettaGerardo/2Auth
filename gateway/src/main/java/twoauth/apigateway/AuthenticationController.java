@@ -31,23 +31,18 @@ public class AuthenticationController
     private final ObjectMapper objectMapper;
 
     public AuthenticationController(
-            @Value("${backend-domain}") String backendDomain,
-            @Value("${backend-port}") Integer backendPort,
+            @Value("${2Auth.backend-domain}") String backendDomain,
+            @Value("${2Auth.backend-port}") Integer backendPort,
             @Value("${server.ssl.enabled}") Boolean isHttpsEnabled,
             ServerSecurityContextRepository securityContextRepository,
             WebClient webClient,
             ObjectMapper objectMapper
     ) {
         final String scheme = Boolean.TRUE == isHttpsEnabled ? "https" : "http";
+        final int port = backendPort == null ? -1 : backendPort;
         try {
-            registrationURI = new URI(
-                    scheme, null, backendDomain, backendPort,
-                    "/registration", null, null
-            );
-            loginURI = new URI(
-                    scheme, null, backendDomain, backendPort,
-                    "/login", null, null
-            );
+            registrationURI = new URI(scheme, null, backendDomain, port, "/registration", null, null);
+            loginURI = new URI(scheme, null, backendDomain, port, "/login", null, null);
         }
         catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid backend registration/login URI.");

@@ -6,6 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import twoauth.backend.security.UserNotDeletedException;
+import twoauth.backend.security.UserNotFoundException;
+import twoauth.backend.security.UserNotSavedException;
+import twoauth.backend.security.UserNotUpdatedException;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -15,7 +19,13 @@ public class ApiExceptionHandler
 {
     private static final ZonedDateTime ZONE = ZonedDateTime.now(ZoneId.of("Europe/Rome"));
 
-    @ExceptionHandler(value = {BadRequestException.class})
+    @ExceptionHandler(value = {
+            BadRequestException.class,
+            UserNotFoundException.class,
+            UserNotSavedException.class,
+            UserNotDeletedException.class,
+            UserNotUpdatedException.class
+    })
     public ResponseEntity<ApiException> handleBadRequestException(BadRequestException e)
     {
         final HttpStatus httpStatus = HttpStatus.BAD_REQUEST;

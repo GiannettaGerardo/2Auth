@@ -20,12 +20,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter
 {
+    private static final List<String> EXCLUSION_URIS = List.of("/login", "/registration");
     private final JwtKeyStore keyStore;
+
+    @Override
+    protected boolean shouldNotFilter(final HttpServletRequest request) {
+        return EXCLUSION_URIS.contains(request.getRequestURI());
+    }
 
     @Override
     protected void doFilterInternal(

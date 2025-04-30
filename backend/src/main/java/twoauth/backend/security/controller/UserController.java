@@ -1,5 +1,6 @@
 package twoauth.backend.security.controller;
 
+import org.springframework.http.MediaType;
 import twoauth.backend.exception.BadRequestException;
 import twoauth.backend.security.*;
 import twoauth.backend.security.model.User;
@@ -14,7 +15,7 @@ public class UserController
 {
     private final UserService userService;
 
-    @GetMapping("/{email}")
+    @GetMapping(value = "/{email}", produces = MediaType.APPLICATION_JSON_VALUE)
     public User.NoPasswordDto getById(@PathVariable final String email) throws UserNotFoundException
     {
         String errorMessage;

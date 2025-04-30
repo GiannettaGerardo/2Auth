@@ -69,7 +69,13 @@ public class UserRepositoryImpl implements UserRepository
         var now = new Date();
         user.setCreation(now);
         user.setLastUpdate(now);
-        mongoTemplate.save(user, UserRepository.TABLE);
+        try {
+            mongoTemplate.insert(user, UserRepository.TABLE);
+        }
+        catch (Exception e) {
+            System.err.println(e.getMessage());
+            return false;
+        }
         return true;
     }
 

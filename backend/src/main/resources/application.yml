@@ -1,4 +1,11 @@
-server-port: 8081
+# Custom properties to ease configuration overrides
+# on command-line or IDE launch configurations
+2Auth:
+  jwt:
+    # 8 hours in milliseconds.
+    time-validity-in-millis: 28800000
+    # 24 hours in milliseconds.
+    key-time-validity-in-millis: 86400000
 
 spring:
   jackson:
@@ -22,7 +29,7 @@ spring:
       host: localhost
 
 server:
-  port: ${server-port}
+  port: 8081
   error:
     path: "/error_Lg-aieD1zPiG1_L2D6Wwe_avS2I-Avjrq5I8-"
     whitelabel:

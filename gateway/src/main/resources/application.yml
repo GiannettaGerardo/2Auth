@@ -1,12 +1,19 @@
 # Custom properties to ease configuration overrides
 # on command-line or IDE launch configurations
-port: 8080
-backend-port: 8081
-backend-domain: localhost
-allowedOrigins: "*"
+2Auth:
+  # Cannot be null.
+  backend-domain: localhost
+  # If empty, no port number is used.
+  backend-port: 8081
+  # To configure CORS policy. If empty, the default is "*".
+  allowedOrigins: "*"
+  # To configure the only allowed http methods. If empty, the default are GET, POST, PUT, DELETE.
+  allowedHttpMethods: GET, POST, PUT, DELETE
+  # This name is combined with the secure cookie prefix "__Host-". If empty, the default is "XYZ_S".
+  customSessionIdName: "XYZ_S"
 
 server:
-  port: ${port}
+  port: 8080
   error:
     whitelabel:
       enabled: false
@@ -31,6 +38,7 @@ spring:
             - Path=/api/**
           filters:
             - JwtTokenRelay
+            - ChangeSessionId
             - LogoutIfUnauthorized
             - StripPrefix=1
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin

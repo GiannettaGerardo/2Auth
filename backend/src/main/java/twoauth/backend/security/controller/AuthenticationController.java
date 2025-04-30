@@ -1,5 +1,6 @@
 package twoauth.backend.security.controller;
 
+import twoauth.backend.security.UserNotSavedException;
 import twoauth.backend.security.Validator;
 import twoauth.backend.security.model.AuthRequest;
 import twoauth.backend.security.model.User;
@@ -18,7 +19,7 @@ public class AuthenticationController
     private final AuthenticationService authenticationService;
 
     @PostMapping("/registration")
-    public ResponseEntity<String> registration(@RequestBody final User user)
+    public ResponseEntity<String> registration(@RequestBody final User user) throws UserNotSavedException
     {
         String errorMessage;
         if ((errorMessage = Validator.validateUser(user, false)) != null)

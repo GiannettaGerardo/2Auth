@@ -35,20 +35,47 @@ import org.springframework.web.server.session.WebSessionIdResolver;
 import org.springframework.web.server.session.WebSessionStore;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
 class SecurityConfiguration
 {
-    private static final String HOST_PREFIXED_SESSION_ID_NAME = "__Host-TEC_S";
     private static final String COMPLETE_LOGOUT_PATH = "/complete-logout";
-    private static final List<HttpMethod> allowedHttpMethods = List.of(
-            HttpMethod.GET,
-            HttpMethod.POST,
-            HttpMethod.PUT,
-            HttpMethod.DELETE
-    );
+    private final List<HttpMethod> allowedHttpMethods;
+
+    public SecurityConfiguration(
+            @Value("${2Auth.allowedHttpMethods}") List<String> allowedHttpMethods
+    ) {
+        if (allowedHttpMethods == null || allowedHttpMethods.isEmpty())
+            this.allowedHttpMethods = List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
+        else {
+            final var httpMethods = HttpMethod.values();
+            for (String method : allowedHttpMethods) {
+                if (Arrays.stream(httpMethods).noneMatch(m -> m.matches(method))) {
+
+                }
+            }
+        }
+
+
+    }
+
+    private static List<HttpMethod> getHttpMethod(List<String> allowedHttpMethods) {
+        boolean isOk = true;
+        final var httpMethods = HttpMethod.values();
+        for (String method : allowedHttpMethods) {
+            if (Arrays.stream(httpMethods).noneMatch(m -> m.matches(method))) {
+                isOk = false;
+                break;
+            }
+        }
+        if (! isOk) {
+            return List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
+        }
+        
+    }
 
     @Bean
     SecurityWebFilterChain securityFilterChain(
@@ -109,7 +136,9 @@ class SecurityConfiguration
     }
 
     @Bean
-    UrlBasedCorsConfigurationSource corsConfigurationSource(@Value("${allowedOrigins}") List<String> allowedOrigins) {
+    UrlBasedCorsConfigurationSource corsConfigurationSource(
+            @Value("${2Auth.allowedOrigins}") List<String> allowedOrigins
+    ) {
         if (allowedOrigins.isEmpty())
             allowedOrigins = List.of("*");
 
@@ -129,9 +158,16 @@ class SecurityConfiguration
      * OWASP <a href="https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes">Session Management Cookie Attributes</a>
      */
     @Bean
-    WebSessionIdResolver webSessionIdResolver(@Value("${server.ssl.enabled}") Boolean isSslEnabled) {
+    WebSessionIdResolver webSessionIdResolver(
+            @Value("${server.ssl.enabled}") Boolean isSslEnabled,
+            @Value("${2Auth.customSessionIdName}") String customSessionIdName
+    ) {
+        if (customSessionIdName == null || customSessionIdName.isBlank())
+            customSessionIdName = "XYZ_S";
+        customSessionIdName = String.format("__Host-%s", customSessionIdName);
+
         final var resolver = new CookieWebSessionIdResolver();
-        resolver.setCookieName(HOST_PREFIXED_SESSION_ID_NAME);
+        resolver.setCookieName(customSessionIdName);
         resolver.addCookieInitializer(builder -> builder
                 .path("/")
                 .sameSite("Strict")
