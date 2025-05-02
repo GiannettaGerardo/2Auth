@@ -45,27 +45,18 @@ class SecurityConfiguration
     private static final String COMPLETE_LOGOUT_PATH = "/complete-logout";
     private final List<HttpMethod> allowedHttpMethods;
 
-    public SecurityConfiguration(
-            @Value("${2Auth.allowedHttpMethods}") List<String> allowedHttpMethods
-    ) {
-        if (allowedHttpMethods == null || allowedHttpMethods.isEmpty())
-            this.allowedHttpMethods = List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
-        else {
-            final var httpMethods = HttpMethod.values();
-            for (String method : allowedHttpMethods) {
-                if (Arrays.stream(httpMethods).noneMatch(m -> m.matches(method))) {
-
-                }
-            }
-        }
-
-
+    public SecurityConfiguration(@Value("${2Auth.allowedHttpMethods}") List<String> allowedHttpMethods) {
+        this.allowedHttpMethods = getHttpMethod(allowedHttpMethods);
     }
 
-    private static List<HttpMethod> getHttpMethod(List<String> allowedHttpMethods) {
+    private static List<HttpMethod> getHttpMethod(List<String> initialHttpMethods)
+    {
+        if (initialHttpMethods == null || initialHttpMethods.isEmpty())
+            return List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
+
         boolean isOk = true;
         final var httpMethods = HttpMethod.values();
-        for (String method : allowedHttpMethods) {
+        for (String method : initialHttpMethods) {
             if (Arrays.stream(httpMethods).noneMatch(m -> m.matches(method))) {
                 isOk = false;
                 break;
@@ -74,7 +65,7 @@ class SecurityConfiguration
         if (! isOk) {
             return List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
         }
-        
+        return initialHttpMethods.stream().map(HttpMethod::valueOf).toList();
     }
 
     @Bean
