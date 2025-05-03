@@ -6,23 +6,20 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-public class UserDetailsImpl implements UserDetails, CredentialsContainer, Externalizable
+public final class UserDetailsImpl implements UserDetails, CredentialsContainer, Serializable
 {
-    private String email;
-    private String password;
-    @Getter private String firstName;
-    @Getter private String lastName;
-    private Date creation;
-    private Date lastUpdate;
-    private List<GrantedAuthority> permissions;
+    private final String email;
+    private transient String password;
+    @Getter private final String firstName;
+    @Getter private final String lastName;
+    private final Date creation;
+    private final Date lastUpdate;
+    private final List<GrantedAuthority> permissions;
 
     public UserDetailsImpl(
             String email, String password, String firstName, String lastName,
@@ -101,15 +98,5 @@ public class UserDetailsImpl implements UserDetails, CredentialsContainer, Exter
                 ", lastUpdate=" + lastUpdate +
                 ", permissions=" + permissions.stream().map(GrantedAuthority::getAuthority).toList() +
                 '}';
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        throw new IllegalAccessError();
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        throw new IllegalAccessError();
     }
 }

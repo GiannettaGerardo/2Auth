@@ -248,7 +248,7 @@ public final class Validator
             return "Authentication Request is null.";
 
         String errorMessage;
-        if ((errorMessage = validateEmail(request.getUsername())) != null)
+        if ((errorMessage = validateEmail(request.getEmail())) != null)
             return errorMessage;
 
         if ((errorMessage = validatePassword(request.getPassword().toCharArray())) != null)

@@ -1,17 +1,22 @@
-package twoauth.backend.security.model;
+package twoauth.apigateway.model;
 
-import lombok.Getter;
 import org.springframework.security.core.CredentialsContainer;
 
-import java.io.*;
+import java.io.Serializable;
 
-@Getter
-public final class AuthRequest implements CredentialsContainer, Serializable
-{
+public final class AuthRequest implements CredentialsContainer, Serializable {
     private String email;
     private transient String password;
 
     private AuthRequest() {}
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
 
     @Override
     public void eraseCredentials() {

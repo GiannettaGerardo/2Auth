@@ -57,7 +57,7 @@ public class AuthenticationServiceImpl implements AuthenticationService
     @Override
     public ResponseEntity<String> login(final AuthRequest request)
     {
-        final var authRequest = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+        final var authRequest = new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
         request.eraseCredentials();
 
         Authentication authentication;

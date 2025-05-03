@@ -2,22 +2,33 @@ package twoauth.backend.security.service;
 
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
-public class InMemoryJwtKeyStore implements JwtKeyStore
+class InMemoryJwtKeyStore implements JwtKeyStore
 {
-    private final long keyTimeValidityInMillis;
     private final AtomicReference<SecretKey> key;
+    private final TaskScheduler taskScheduler;
 
     public InMemoryJwtKeyStore(
-            @Value("${2Auth.jwt.key-time-validity-in-millis}") Long keyTVM
+            @Value("${2Auth.jwt.key-time-validity-in-millis}") Long keyTVM,
+            TaskScheduler taskScheduler
     ) {
-        this.keyTimeValidityInMillis = (keyTVM == null || keyTVM < 1) ? 86_400_000L : keyTVM;
-        this.key = new AtomicReference<>(generateNewKey());
+        final long keyTimeValidityInMillis = (keyTVM == null || keyTVM < 1) ? 86_400_000L : keyTVM;
+        this.key = new AtomicReference<>(null);
+        this.taskScheduler = taskScheduler;
+        this.taskScheduler.scheduleAtFixedRate(
+                /* there is no need to use a mutex or a CAS operation because
+                   this is the only write operation on the key and is executed
+                   only one time, by only one thread, at a fixed rate. */
+                () -> this.key.setRelease(generateNewKey()),
+                Duration.ofMillis(keyTimeValidityInMillis)
+        );
     }
 
     @Override
@@ -25,7 +36,8 @@ public class InMemoryJwtKeyStore implements JwtKeyStore
         return key.getAcquire();
     }
 
-    private static SecretKey generateNewKey() {
+    private SecretKey generateNewKey() {
+        System.out.println("New Key generated.");
         return Jwts.SIG.HS256.key().build();
     }
 }

@@ -5,19 +5,25 @@ import org.springframework.data.annotation.Id;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.Date;
 import java.util.List;
 
 @AllArgsConstructor
 @Getter
-public final class User implements CredentialsContainer, Externalizable
+public final class User implements CredentialsContainer, Serializable
 {
+    public record NoPasswordDto(
+            @Id String email,
+            String firstName,
+            String lastName,
+            Date creation,
+            Date lastUpdate,
+            List<String> permissions
+    ) {}
+
     @Id private String email;
-    private String password;
+    private transient String password;
     private String firstName;
     private String lastName;
     @Setter private Date creation;
@@ -31,26 +37,19 @@ public final class User implements CredentialsContainer, Externalizable
     }
 
     @Override
+    public String toString() {
+        return "User{" +
+                "email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", creation=" + creation +
+                ", lastUpdate=" + lastUpdate +
+                ", permissions=" + permissions +
+                '}';
+    }
+
+    @Override
     public void eraseCredentials() {
         this.password = null;
     }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        throw new IllegalAccessError();
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        throw new IllegalAccessError();
-    }
-
-    public record NoPasswordDto(
-            @Id String email,
-            String firstName,
-            String lastName,
-            Date creation,
-            Date lastUpdate,
-            List<String> permissions
-    ) {}
 }

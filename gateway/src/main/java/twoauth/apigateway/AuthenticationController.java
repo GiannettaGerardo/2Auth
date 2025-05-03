@@ -1,6 +1,8 @@
 package twoauth.apigateway;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import twoauth.apigateway.model.AuthRequest;
+import twoauth.apigateway.model.User;
 import twoauth.apigateway.securityconfig.JwtAuthentication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -19,7 +21,6 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.List;
 
 @RestController
 public class AuthenticationController
@@ -54,10 +55,8 @@ public class AuthenticationController
     }
 
     @PostMapping("/registration")
-    public Mono<ResponseEntity<Object>> registration(
-            @RequestBody final User user,
-            final ServerWebExchange exchange
-    ) {
+    public Mono<ResponseEntity<Object>> registration(@RequestBody final User user)
+    {
         return webClient.post()
                 .uri(registrationURI)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -71,11 +70,11 @@ public class AuthenticationController
                 )
                 .bodyToMono(String.class)
                 .map(username -> {
-                    user.erasePassword();
+                    user.eraseCredentials();
                     return ResponseEntity.ok().build();
                 })
                 .onErrorResume(e -> {
-                    user.erasePassword();
+                    user.eraseCredentials();
                     if (e instanceof AuthBadRequestException)
                         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()));
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
@@ -83,10 +82,8 @@ public class AuthenticationController
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity<Object>> login(
-            @RequestBody final AuthRequest request,
-            final ServerWebExchange exchange
-    ) {
+    public Mono<ResponseEntity<Object>> login(@RequestBody final AuthRequest request,
+                                              final ServerWebExchange exchange) {
         return webClient.post()
                 .uri(loginURI)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -100,77 +97,16 @@ public class AuthenticationController
                 )
                 .bodyToMono(String.class)
                 .flatMap(jwt -> {
-                    request.erasePassword();
+                    request.eraseCredentials();
                     final SecurityContext context = new SecurityContextImpl(new JwtAuthentication(jwt, objectMapper));
                     return securityContextRepository.save(exchange, context)
                             .thenReturn(ResponseEntity.ok().build());
                 })
                 .onErrorResume(e -> {
-                    request.erasePassword();
+                    request.eraseCredentials();
                     if (e instanceof AuthBadRequestException)
                         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()));
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
                 });
-    }
-
-    public static class AuthRequest {
-        private String username;
-        private String password;
-
-        private AuthRequest() {}
-
-        public String getUsername() {
-            return username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void erasePassword() {
-            this.password = null;
-        }
-
-        @Override
-        public String toString() {
-            return "AuthRequest{" +
-                    "username='" + username + '\'' +
-                    ", password='" + password + '\'' +
-                    '}';
-        }
-    }
-
-    public static class User {
-        private String email;
-        private String password;
-        private String firstName;
-        private String lastName;
-        private List<String> permissions;
-
-        private User() {}
-
-        public void erasePassword() {
-            this.password = null;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public String getFirstName() {
-            return firstName;
-        }
-
-        public List<String> getPermissions() {
-            return permissions;
-        }
-
-        public String getLastName() {
-            return lastName;
-        }
     }
 }
