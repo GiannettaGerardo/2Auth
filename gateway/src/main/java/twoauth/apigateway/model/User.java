@@ -2,13 +2,12 @@ package twoauth.apigateway.model;
 
 import org.springframework.security.core.CredentialsContainer;
 
-import java.io.Serializable;
 import java.util.List;
 
-public final class User implements CredentialsContainer, Serializable
+public final class User implements CredentialsContainer
 {
     private String email;
-    private transient String password;
+    private String password;
     private String firstName;
     private String lastName;
     private List<String> permissions;

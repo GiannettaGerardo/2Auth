@@ -5,13 +5,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.io.*;
 import java.util.Date;
 import java.util.List;
 
 @AllArgsConstructor
 @Getter
-public final class User implements CredentialsContainer, Serializable
+public final class User implements CredentialsContainer
 {
     public record NoPasswordDto(
             @Id String email,
@@ -23,7 +22,7 @@ public final class User implements CredentialsContainer, Serializable
     ) {}
 
     @Id private String email;
-    private transient String password;
+    private String password;
     private String firstName;
     private String lastName;
     @Setter private Date creation;

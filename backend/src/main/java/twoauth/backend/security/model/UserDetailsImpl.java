@@ -1,19 +1,20 @@
 package twoauth.backend.security.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-public final class UserDetailsImpl implements UserDetails, CredentialsContainer, Serializable
+public final class UserDetailsImpl implements UserDetails, CredentialsContainer
 {
     private final String email;
+    @JsonIgnore
     private transient String password;
     @Getter private final String firstName;
     @Getter private final String lastName;
@@ -34,6 +35,18 @@ public final class UserDetailsImpl implements UserDetails, CredentialsContainer,
         this.permissions = permissions.stream()
                 .map(p -> (GrantedAuthority) new SimpleGrantedAuthority(p))
                 .toList(); // Unmodifiable List
+    }
+
+    public static UserDetailsImpl fromUser(User user) {
+        return new UserDetailsImpl(
+                user.getEmail(),
+                user.getPassword(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getCreation(),
+                user.getLastUpdate(),
+                user.getPermissions()
+        );
     }
 
     @Override

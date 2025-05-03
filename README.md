@@ -1,7 +1,7 @@
 # 2Auth
 
 <p>
-  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
+  <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg" alt="License: BSD 3-Clause"></a>
   <a href="https://spring.io/"><img src="https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg" alt="Spring Boot Version"></a>
 </p>
 
@@ -77,9 +77,9 @@ You can customize the application changing directly the code, but there are some
     ```yaml
     2Auth:
       jwt:
-        # 8 hours in milliseconds.
+        # Time before the JWT expires (in milliseconds). If empty, default is 8 hours.
         time-validity-in-millis: 28800000
-        # 24 hours in milliseconds.
+        # Time before renewing the key used to sign JWTs (in milliseconds). If empty, default is 24 hours.
         key-time-validity-in-millis: 86400000
     ```
 

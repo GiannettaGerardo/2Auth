@@ -28,23 +28,14 @@ public class UserRepositoryImpl implements UserRepository
     {
         final var user = mongoTemplate.findById(email, User.class, UserRepository.TABLE);
         if (user != null) {
-            final var userDetails = new UserDetailsImpl(
-                    user.getEmail(),
-                    user.getPassword(),
-                    user.getFirstName(),
-                    user.getLastName(),
-                    user.getCreation(),
-                    user.getLastUpdate(),
-                    user.getPermissions()
-            );
-            Optional<UserDetails> userDetailsOpt = Optional.of(userDetails);
+            final UserDetailsImpl userDetails = UserDetailsImpl.fromUser(user);
             user.eraseCredentials();
 
             String errorMessage;
             if ((errorMessage = Validator.validateUserDetailsImpl(userDetails)) != null)
                 throw new InvalidDbEntityException(errorMessage);
 
-            return userDetailsOpt;
+            return Optional.of(userDetails);
         }
         return Optional.empty();
     }

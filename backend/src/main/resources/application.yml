@@ -2,9 +2,9 @@
 # on command-line or IDE launch configurations
 2Auth:
   jwt:
-    # 8 hours in milliseconds.
+    # Time before the JWT expires (in milliseconds). If empty, default is 8 hours.
     time-validity-in-millis: 28800000
-    # 24 hours in milliseconds.
+    # Time before renewing the key used to sign JWTs (in milliseconds). If empty, default is 24 hours.
     key-time-validity-in-millis: 86400000
 
 spring:

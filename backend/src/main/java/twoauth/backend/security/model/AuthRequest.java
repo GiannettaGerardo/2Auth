@@ -3,13 +3,11 @@ package twoauth.backend.security.model;
 import lombok.Getter;
 import org.springframework.security.core.CredentialsContainer;
 
-import java.io.*;
-
 @Getter
-public final class AuthRequest implements CredentialsContainer, Serializable
+public final class AuthRequest implements CredentialsContainer
 {
     private String email;
-    private transient String password;
+    private String password;
 
     private AuthRequest() {}
 

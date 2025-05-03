@@ -1,5 +1,6 @@
 package twoauth.backend.security.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
@@ -12,7 +13,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 class InMemoryJwtKeyStore implements JwtKeyStore
 {
+    @JsonIgnore
     private final AtomicReference<SecretKey> key;
+    @JsonIgnore
     private final TaskScheduler taskScheduler;
 
     public InMemoryJwtKeyStore(
@@ -39,5 +42,10 @@ class InMemoryJwtKeyStore implements JwtKeyStore
     private SecretKey generateNewKey() {
         System.out.println("New Key generated.");
         return Jwts.SIG.HS256.key().build();
+    }
+
+    @Override
+    public String toString() {
+        return "InMemoryJwtKeyStore{}";
     }
 }
