@@ -1,15 +1,13 @@
 package twoauth.backend.security.service;
 
-import twoauth.backend.security.UserNotDeletedException;
-import twoauth.backend.security.UserNotFoundException;
-import twoauth.backend.security.UserNotSavedException;
-import twoauth.backend.security.UserNotUpdatedException;
+import twoauth.backend.exception.UserNotDeletedException;
+import twoauth.backend.exception.UserNotFoundException;
+import twoauth.backend.exception.UserNotUpdatedException;
 import twoauth.backend.security.model.User;
 
 public interface UserService
 {
-    User.NoPasswordDto safeGetById(String email) throws UserNotFoundException;
-    void save(User user) throws UserNotSavedException;
-    void update(User.NoPasswordDto user) throws UserNotUpdatedException;
+    User.SecureDto safeGetById(String email) throws UserNotFoundException;
+    void update(User.SecureDto user) throws UserNotUpdatedException;
     void delete(String email) throws UserNotDeletedException;
 }

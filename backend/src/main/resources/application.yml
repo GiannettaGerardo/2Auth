@@ -1,10 +1,13 @@
 # Custom properties to ease configuration overrides
 # on command-line or IDE launch configurations
 2Auth:
+  # Can be one between <NONE, EMAIL_FOR_FRONTEND, EMAIL_FOR_API, TEST_FOR_FRONTEND, TEST_FOR_API>.
+  # Default is TEST_FOR_API.
+  registration-confirmation: TEST_FOR_API
   jwt:
-    # Time before the JWT expires (in milliseconds). If empty, default is 8 hours.
+    # Time before the JWT expires (in milliseconds). Default is 8 hours.
     time-validity-in-millis: 28800000
-    # Time before renewing the key used to sign JWTs (in milliseconds). If empty, default is 24 hours.
+    # Time before renewing the key used to sign JWTs (in milliseconds). Default is 24 hours.
     key-time-validity-in-millis: 86400000
 
 spring:
@@ -27,6 +30,17 @@ spring:
       database: 2Auth
       port: 27017
       host: localhost
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8081

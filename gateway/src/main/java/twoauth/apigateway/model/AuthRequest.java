@@ -5,6 +5,7 @@ import org.springframework.security.core.CredentialsContainer;
 public final class AuthRequest implements CredentialsContainer {
     private String email;
     private String password;
+    private String base64OTActivationToken;
 
     private AuthRequest() {}
 
@@ -16,9 +17,14 @@ public final class AuthRequest implements CredentialsContainer {
         return password;
     }
 
+    public String getBase64OTActivationToken() {
+        return base64OTActivationToken;
+    }
+
     @Override
     public void eraseCredentials() {
         this.password = null;
+        this.base64OTActivationToken = null;
     }
 
     @Override

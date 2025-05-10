@@ -6,36 +6,34 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import twoauth.backend.security.UserNotDeletedException;
-import twoauth.backend.security.UserNotFoundException;
-import twoauth.backend.security.UserNotSavedException;
-import twoauth.backend.security.UserNotUpdatedException;
+import twoauth.backend.exception.UserNotDeletedException;
+import twoauth.backend.exception.UserNotFoundException;
+import twoauth.backend.exception.UserNotUpdatedException;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @ControllerAdvice
-public class ApiExceptionHandler
+public class TwoAuthExceptionHandler
 {
     private static final ZonedDateTime ZONE = ZonedDateTime.now(ZoneId.of("Europe/Rome"));
 
     @ExceptionHandler(value = {
             BadRequestException.class,
             UserNotFoundException.class,
-            UserNotSavedException.class,
             UserNotDeletedException.class,
             UserNotUpdatedException.class
     })
-    public ResponseEntity<ApiException> handleBadRequestException(BadRequestException e)
+    public ResponseEntity<TwoAuthExceptionWrapper> handleBadRequestException(Exception e)
     {
         final HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
-        return new ResponseEntity<>(new ApiException(e.getMessage(), httpStatus, ZONE), httpStatus);
+        return new ResponseEntity<>(new TwoAuthExceptionWrapper(e.getMessage(), httpStatus, ZONE), httpStatus);
     }
 
     @ExceptionHandler(value = {InvalidDbEntityException.class})
-    public ResponseEntity<ApiException> handleInvalidDbEntityException(InvalidDbEntityException e)
+    public ResponseEntity<TwoAuthExceptionWrapper> handleInvalidDbEntityException(InvalidDbEntityException e)
     {
         final HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        return new ResponseEntity<>(new ApiException("Something went wrong.", httpStatus, ZONE), httpStatus);
+        return new ResponseEntity<>(new TwoAuthExceptionWrapper("Something went wrong.", httpStatus, ZONE), httpStatus);
     }
 }

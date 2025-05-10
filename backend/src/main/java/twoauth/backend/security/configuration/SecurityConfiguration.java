@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class SecurityConfiguration
 {
-    @Value("${server.error.path}")
+    @Value("${server.error.path:/error}")
     private String serverErrorPath;
 
     @Bean

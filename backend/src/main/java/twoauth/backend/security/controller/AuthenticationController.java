@@ -1,44 +1,45 @@
 package twoauth.backend.security.controller;
 
-import twoauth.backend.security.UserNotSavedException;
+import twoauth.backend.exception.BadRequestException;
 import twoauth.backend.security.Validator;
 import twoauth.backend.security.model.AuthRequest;
+import twoauth.backend.security.model.JwtResponse;
 import twoauth.backend.security.model.User;
-import twoauth.backend.security.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import twoauth.backend.security.service.LoginService;
+import twoauth.backend.security.service.registration.RegistrationService;
 
 @RestController
 @RequiredArgsConstructor
 public class AuthenticationController
 {
-    private final AuthenticationService authenticationService;
+    private final RegistrationService registrationService;
+    private final LoginService loginService;
 
     @PostMapping("/registration")
-    public ResponseEntity<String> registration(@RequestBody final User user) throws UserNotSavedException
+    public Object registration(@RequestBody final User.RegistrationDto user)
     {
         String errorMessage;
-        if ((errorMessage = Validator.validateUser(user, false)) != null)
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST.value())
-                    .body(errorMessage);
+        if ((errorMessage = Validator.validateUserRegistrationDto(user)) != null)
+            throw new BadRequestException(errorMessage);
 
-        return authenticationService.registration(user);
+        if (! registrationService.registration(user))
+            throw new BadRequestException("User not registered.");
+
+        return ResponseEntity.ok(null);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody final AuthRequest request)
+    public ResponseEntity<JwtResponse> login(@RequestBody final AuthRequest request)
     {
         String errorMessage;
         if ((errorMessage = Validator.validateAuthRequest(request)) != null)
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST.value())
-                    .body(errorMessage);
+            throw new BadRequestException(errorMessage);
 
-        return authenticationService.login(request);
+        return loginService.login(request);
     }
 }

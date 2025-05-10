@@ -1,16 +1,16 @@
 # Custom properties to ease configuration overrides
 # on command-line or IDE launch configurations
 2Auth:
-  # Cannot be null.
+  # Default is localhost.
   backend-domain: localhost
-  # If empty, no port number is used.
+  # Default is no port number.
   backend-port: 8081
-  # To configure CORS policy. If empty, the default is "*".
+  # To configure CORS policy. Default is "*".
   allowedOrigins: "*"
-  # To configure the only allowed http methods. If empty, the default are GET, POST, PUT, DELETE.
+  # To configure the only allowed http methods. Default are GET, POST, PUT, DELETE.
   allowedHttpMethods: GET, POST, PUT, DELETE
-  # This name is combined with the secure cookie prefix "__Host-". If empty, the default is "XYZ_S".
-  customSessionIdName: "XYZ_S"
+  # This name is combined with the secure cookie prefix "__Host-". Default is XYZ_S.
+  customSessionIdName: XYZ_S
 
 server:
   port: 8080
@@ -38,7 +38,7 @@ spring:
             - Path=/api/**
           filters:
             - JwtTokenRelay
-            - ChangeSessionId
+            #- ChangeSessionId
             - LogoutIfUnauthorized
             - StripPrefix=1
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin

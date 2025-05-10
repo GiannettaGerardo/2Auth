@@ -19,17 +19,24 @@ the session in the API Gateway component, and to create, store and rotate the JW
 
 ### Key concepts
 
-1. Email and Password Authentication with password hashing and salting;
-2. The API Gateway stores the Session in a HttpOnly Cookie. The cookie has only the Session ID and the name of the cookie has the secure prefix **__Host-** and SameSite **Strict**;
-3. The API Gateway generates a CSRF token and sends it via Cookie (not HttpOnly) to protect the session from CSRF attacks;
-4. The Session ID changes at every http request if the filter **ChangeSessionId** is used in the API Gateway;
-5. When the filter **LogoutIfUnauthorized** is used in the API Gateway, if the proxied request returns a 401 UNAUTHORIZED response, the Session is cleared and the user is logged out; 
-6. The logout invalidates the session and CSRF token;
-7. The complete-logout invalidates each session of a user;
-8. The Backend generates and signs a JWT (Json Web Token) and the API Gateway stores the JWT in the Session, so the Backend has a STATELESS Authentication; 
-The filter **JwtTokenRelay** must be used for proxied requests to the Backend to change the Session ID with the JWT and send it as Bearer token;
-9. The signed JWT has a customizable duration (default is 8 hours);
-10. The signing key of the JWT has a customizable rotation (default every 24 hours);
+1. Authentication with **Email** and **Password**. Password **hashing** and **salting**;
+2. Registration sends a secure unique token via **e-mail** to complete validate the email and the user. This behavior can be fully customized;
+3. API Gateway stores the Session in a HttpOnly cookie. The cookie is like that:
+   - **__Host-** name prefix;
+   - **Session ID** as value, 36 characters; 
+   - **Path=/**; 
+   - **HTTPOnly**; 
+   - **SameSite=Strict**;
+   - **Secure** if SSL is enabled.
+4. HttpOnly cookie protection with CSRF token (Double-Submit Cookie Pattern) with an additional BREACH attack protection (by Spring Security **XorCsrfTokenRequestAttributeHandler**). 
+The token is generated and handled by the API Gateway;
+5. The *optional* filter **ChangeSessionId**, in the API Gateway, changes the Session ID at every http request;
+6. The *optional* filter **LogoutIfUnauthorized**, in the API Gateway, logs out the user and clears the user session if the proxied request returns a 401 UNAUTHORIZED response;
+7. **Logout** + **Complete-Logout** as separate endpoints. Complete-Logout invalidates each session of a user;
+8. Backend is stateless and handles Authentication and Authorization with **signed JWT** (Json Web Token). JWT are generated and signed by the Backend, then is stored in the Session by API Gateway;
+The **JwtTokenRelay** filter must be used, in the API Gateway, for requests proxied to the Backend to exchange the session cookie with the associated JWT and send it as Bearer Token to the Backend;
+9. The signed JWT has a customizable duration;
+10. The signing key for the JWT has a customizable rotation.
 
 ## Getting Started
 
@@ -62,24 +69,27 @@ You can customize the application changing directly the code, but there are some
 - **API Gateway**
     ```yaml
     2Auth:
-      # Cannot be null.
+      # Default is localhost.
       backend-domain: localhost
-      # If empty, no port number is used.
+      # Default is no port number.
       backend-port: 8081
-      # To configure CORS policy. If empty, the default is "*".
-      allowedOrigins: https://my.domain.com, https://my.other.domain:8081
-      # To configure the only allowed http methods. If empty, the default are GET, POST, PUT, DELETE.
+      # To configure CORS policy. Default is "*".
+      allowedOrigins: "*"
+      # To configure the only allowed http methods. Default are GET, POST, PUT, DELETE.
       allowedHttpMethods: GET, POST, PUT, DELETE
-      # This name is combined with the secure cookie prefix "__Host-". If empty, the default is "XYZ_S".
-      customSessionIdName: "XYZ_S"
+      # This name is combined with the secure cookie prefix "__Host-". Default is XYZ_S.
+      customSessionIdName: XYZ_S
     ```
 - **Backend**
     ```yaml
     2Auth:
+      # Can be one between <NONE, EMAIL_FOR_FRONTEND, EMAIL_FOR_API, TEST_FOR_FRONTEND, TEST_FOR_API>.
+      # Default is TEST_FOR_API.
+      registration-confirmation: TEST_FOR_API
       jwt:
-        # Time before the JWT expires (in milliseconds). If empty, default is 8 hours.
+        # Time before the JWT expires (in milliseconds). Default is 8 hours.
         time-validity-in-millis: 28800000
-        # Time before renewing the key used to sign JWTs (in milliseconds). If empty, default is 24 hours.
+        # Time before renewing the key used to sign JWTs (in milliseconds). Default is 24 hours.
         key-time-validity-in-millis: 86400000
     ```
 

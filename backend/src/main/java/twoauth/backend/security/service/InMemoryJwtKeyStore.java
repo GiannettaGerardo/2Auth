@@ -19,10 +19,10 @@ class InMemoryJwtKeyStore implements JwtKeyStore
     private final TaskScheduler taskScheduler;
 
     public InMemoryJwtKeyStore(
-            @Value("${2Auth.jwt.key-time-validity-in-millis}") Long keyTVM,
+            @Value("${2Auth.jwt.key-time-validity-in-millis:86400000}") long keyTVM,
             TaskScheduler taskScheduler
     ) {
-        final long keyTimeValidityInMillis = (keyTVM == null || keyTVM < 1) ? 86_400_000L : keyTVM;
+        final long keyTimeValidityInMillis = (keyTVM < 1) ? 86_400_000L : keyTVM;
         this.key = new AtomicReference<>(null);
         this.taskScheduler = taskScheduler;
         this.taskScheduler.scheduleAtFixedRate(
@@ -41,7 +41,7 @@ class InMemoryJwtKeyStore implements JwtKeyStore
 
     private SecretKey generateNewKey() {
         System.out.println("New Key generated.");
-        return Jwts.SIG.HS256.key().build();
+        return Jwts.SIG.HS512.key().build();
     }
 
     @Override

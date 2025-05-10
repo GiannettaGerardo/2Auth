@@ -1,4 +1,4 @@
-package twoauth.backend.security;
+package twoauth.backend.exception;
 
 public class UserNotUpdatedException extends Exception {
   public UserNotUpdatedException(String message) {

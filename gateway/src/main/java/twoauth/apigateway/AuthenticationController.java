@@ -2,6 +2,7 @@ package twoauth.apigateway;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import twoauth.apigateway.model.AuthRequest;
+import twoauth.apigateway.model.JwtResponse;
 import twoauth.apigateway.model.User;
 import twoauth.apigateway.securityconfig.JwtAuthentication;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,18 +33,17 @@ public class AuthenticationController
     private final ObjectMapper objectMapper;
 
     public AuthenticationController(
-            @Value("${2Auth.backend-domain}") String backendDomain,
-            @Value("${2Auth.backend-port}") Integer backendPort,
-            @Value("${server.ssl.enabled}") Boolean isHttpsEnabled,
+            @Value("${2Auth.backend-domain:localhost}") String backendDomain,
+            @Value("${2Auth.backend-port:-1}") int backendPort,
+            @Value("${server.ssl.enabled:false}") boolean isHttpsEnabled,
             ServerSecurityContextRepository securityContextRepository,
             WebClient webClient,
             ObjectMapper objectMapper
     ) {
-        final String scheme = Boolean.TRUE == isHttpsEnabled ? "https" : "http";
-        final int port = backendPort == null ? -1 : backendPort;
+        final String scheme = isHttpsEnabled ? "https" : "http";
         try {
-            registrationURI = new URI(scheme, null, backendDomain, port, "/registration", null, null);
-            loginURI = new URI(scheme, null, backendDomain, port, "/login", null, null);
+            registrationURI = new URI(scheme, null, backendDomain, backendPort, "/registration", null, null);
+            loginURI = new URI(scheme, null, backendDomain, backendPort, "/login", null, null);
         }
         catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid backend registration/login URI.");
@@ -61,15 +61,17 @@ public class AuthenticationController
                 .uri(registrationURI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(user)
-                .accept(MediaType.TEXT_PLAIN)
+                .accept(MediaType.APPLICATION_JSON)
                 .acceptCharset(Charset.defaultCharset())
                 .retrieve()
                 .onStatus(
                         status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
-                        response -> response.bodyToMono(String.class).map(AuthBadRequestException::new)
+                        response -> response
+                                .bodyToMono(ErrorWrapper.class)
+                                .map(wrapper -> new AuthBadRequestException(wrapper.error()))
                 )
-                .bodyToMono(String.class)
-                .map(username -> {
+                .bodyToMono(Object.class)
+                .map(__ -> {
                     user.eraseCredentials();
                     return ResponseEntity.ok().build();
                 })
@@ -88,17 +90,19 @@ public class AuthenticationController
                 .uri(loginURI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
-                .accept(MediaType.TEXT_PLAIN)
+                .accept(MediaType.APPLICATION_JSON)
                 .acceptCharset(Charset.defaultCharset())
                 .retrieve()
                 .onStatus(
                         status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
-                        response -> response.bodyToMono(String.class).map(AuthBadRequestException::new)
+                        response -> response
+                                .bodyToMono(ErrorWrapper.class)
+                                .map(wrapper -> new AuthBadRequestException(wrapper.error()))
                 )
-                .bodyToMono(String.class)
-                .flatMap(jwt -> {
+                .bodyToMono(JwtResponse.class)
+                .flatMap(response -> {
                     request.eraseCredentials();
-                    final SecurityContext context = new SecurityContextImpl(new JwtAuthentication(jwt, objectMapper));
+                    final SecurityContext context = new SecurityContextImpl(new JwtAuthentication(response.jwt(), objectMapper));
                     return securityContextRepository.save(exchange, context)
                             .thenReturn(ResponseEntity.ok().build());
                 })
@@ -109,4 +113,8 @@ public class AuthenticationController
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
                 });
     }
+
+    public record ErrorWrapper(
+            String error
+    ) {}
 }

@@ -2,18 +2,19 @@ package twoauth.backend.security;
 
 import twoauth.backend.security.model.AuthRequest;
 import twoauth.backend.security.model.User;
-import twoauth.backend.security.model.UserDetailsImpl;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
 public final class Validator
 {
+    private static final String INVALID_OT_ACTIVATION_TOKEN = "One Time Activation Token is invalid.";
     private static final Pattern EMAIL_CHARS_PATTERN;
     private static final Pattern NAME_CHARS_PATTERN;
     private static final Pattern MORE_THAN_ONE_SPACE_PATTERN;
@@ -146,12 +147,49 @@ public final class Validator
         return clearPassword(password, null);
     }
 
+    // Check if character is allowed in standard Base64
+    private static boolean isBase64Char(char c) {
+        return (c >= 'A' && c <= 'Z') ||
+                (c >= 'a' && c <= 'z') ||
+                (c >= '0' && c <= '9') ||
+                c == '+' || c == '/' || c == '=';
+    }
+
+    public static String validateBase64OTActivationToken(final String base64OTActivationToken) {
+        if (base64OTActivationToken == null)
+            return "One Time Activation Token is null.";
+
+        // Must be multiple of 4
+        if (base64OTActivationToken.length() > 128 || (base64OTActivationToken.length() % 4 != 0)) {
+            return "One Time Activation Token has an incorrect size.";
+        }
+
+        if (base64OTActivationToken.isBlank())
+            return "One Time Activation Token is blank.";
+
+        // Fast manual character validation
+        final int strSize = base64OTActivationToken.length();
+        for (int i = 0; i < strSize; i++) {
+            if (! isBase64Char(base64OTActivationToken.charAt(i)))
+                return INVALID_OT_ACTIVATION_TOKEN;
+        }
+
+        try {
+            Base64.getDecoder().decode(base64OTActivationToken);
+        }
+        catch (IllegalArgumentException e) {
+            return INVALID_OT_ACTIVATION_TOKEN;
+        }
+
+        return null;
+    }
+
     private static String clearPassword(char[] password, String errorMessage) {
         Arrays.fill(password, '\0');
         return errorMessage;
     }
 
-    public static String validateUser(User user, boolean validateDate) {
+    public static String validateUserRegistrationDto(User.RegistrationDto user) {
         if (user == null)
             return "User is null.";
 
@@ -165,14 +203,6 @@ public final class Validator
         if ((errorMessage = validateName(user.getLastName(), "Last")) != null)
             return errorMessage;
 
-        if (validateDate) {
-            if ((errorMessage = validateRegistrationDate(user.getCreation(), "Creation")) != null)
-                return errorMessage;
-
-            if ((errorMessage = validateRegistrationDate(user.getLastUpdate(), "LastUpdate")) != null)
-                return errorMessage;
-        }
-
         if ((errorMessage = validatePermissions(user.getPermissions())) != null)
             return errorMessage;
 
@@ -182,7 +212,7 @@ public final class Validator
         return null;
     }
 
-    public static String validateUserNoPassword(User.NoPasswordDto user) {
+    public static String validateUserSecureDto(User.SecureDto user) {
         if (user == null)
             return "User is null.";
 
@@ -208,7 +238,7 @@ public final class Validator
         return null;
     }
 
-    public static String validateUserDetailsImpl(UserDetailsImpl user) {
+    public static String validateUser(User user) {
         if (user == null)
             return "User is null.";
 
@@ -237,6 +267,13 @@ public final class Validator
                 .toList())) != null)
             return errorMessage;
 
+        if (user.isActive() && user.getActivationToken() != null) {
+            return "Enable Token is not null, but the account is already enabled.";
+        }
+        else if (! user.isActive() && user.getActivationToken() == null) {
+            return "Enable Token is null, but the account is not enabled.";
+        }
+
         if ((errorMessage = validatePassword(user.getPassword().toCharArray())) != null)
             return errorMessage;
 
@@ -253,6 +290,11 @@ public final class Validator
 
         if ((errorMessage = validatePassword(request.getPassword().toCharArray())) != null)
             return errorMessage;
+
+        String oneTimeActivationToken;
+        if ((oneTimeActivationToken = request.getBase64OTActivationToken()) != null
+            && (errorMessage = validateBase64OTActivationToken(oneTimeActivationToken)) != null)
+                return errorMessage;
 
         return null;
     }

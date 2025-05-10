@@ -1,4 +1,4 @@
-package twoauth.backend.security;
+package twoauth.backend.exception;
 
 public class UserNotFoundException extends Exception {
     public UserNotFoundException(String username) {

@@ -45,13 +45,13 @@ class SecurityConfiguration
     private static final String COMPLETE_LOGOUT_PATH = "/complete-logout";
     private final List<HttpMethod> allowedHttpMethods;
 
-    public SecurityConfiguration(@Value("${2Auth.allowedHttpMethods}") List<String> allowedHttpMethods) {
+    public SecurityConfiguration(@Value("${2Auth.allowedHttpMethods:GET,POST,PUT,DELETE}") List<String> allowedHttpMethods) {
         this.allowedHttpMethods = getHttpMethod(allowedHttpMethods);
     }
 
     private static List<HttpMethod> getHttpMethod(List<String> initialHttpMethods)
     {
-        if (initialHttpMethods == null || initialHttpMethods.isEmpty())
+        if (initialHttpMethods.isEmpty())
             return List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);
 
         boolean isOk = true;
@@ -128,7 +128,7 @@ class SecurityConfiguration
 
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource(
-            @Value("${2Auth.allowedOrigins}") List<String> allowedOrigins
+            @Value("${2Auth.allowedOrigins:*}") List<String> allowedOrigins
     ) {
         if (allowedOrigins.isEmpty())
             allowedOrigins = List.of("*");
@@ -150,10 +150,10 @@ class SecurityConfiguration
      */
     @Bean
     WebSessionIdResolver webSessionIdResolver(
-            @Value("${server.ssl.enabled}") Boolean isSslEnabled,
-            @Value("${2Auth.customSessionIdName}") String customSessionIdName
+            @Value("${server.ssl.enabled:false}") boolean isSslEnabled,
+            @Value("${2Auth.customSessionIdName:XYZ_S}") String customSessionIdName
     ) {
-        if (customSessionIdName == null || customSessionIdName.isBlank())
+        if (customSessionIdName.isBlank())
             customSessionIdName = "XYZ_S";
         customSessionIdName = String.format("__Host-%s", customSessionIdName);
 
@@ -163,7 +163,7 @@ class SecurityConfiguration
                 .path("/")
                 .sameSite("Strict")
                 .httpOnly(true)
-                .secure(Boolean.TRUE == isSslEnabled)
+                .secure(isSslEnabled)
         );
         return resolver;
     }

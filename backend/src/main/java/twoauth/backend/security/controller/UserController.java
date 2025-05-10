@@ -2,6 +2,9 @@ package twoauth.backend.security.controller;
 
 import org.springframework.http.MediaType;
 import twoauth.backend.exception.BadRequestException;
+import twoauth.backend.exception.UserNotDeletedException;
+import twoauth.backend.exception.UserNotFoundException;
+import twoauth.backend.exception.UserNotUpdatedException;
 import twoauth.backend.security.*;
 import twoauth.backend.security.model.User;
 import twoauth.backend.security.service.UserService;
@@ -16,7 +19,7 @@ public class UserController
     private final UserService userService;
 
     @GetMapping(value = "/{email}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public User.NoPasswordDto getById(@PathVariable final String email) throws UserNotFoundException
+    public User.SecureDto getById(@PathVariable final String email) throws UserNotFoundException
     {
         String errorMessage;
         if ((errorMessage = Validator.validateEmail(email)) != null)
@@ -25,21 +28,11 @@ public class UserController
         return userService.safeGetById(email);
     }
 
-    @PostMapping
-    public void save(@RequestBody final User user) throws UserNotSavedException
-    {
-        String errorMessage;
-        if ((errorMessage = Validator.validateUser(user, false)) != null)
-            throw new BadRequestException(errorMessage);
-
-        userService.save(user);
-    }
-
     @PutMapping
-    public void update(@RequestBody final User.NoPasswordDto user) throws UserNotUpdatedException
+    public void update(@RequestBody final User.SecureDto user) throws UserNotUpdatedException
     {
         String errorMessage;
-        if ((errorMessage = Validator.validateUserNoPassword(user)) != null)
+        if ((errorMessage = Validator.validateUserSecureDto(user)) != null)
             throw new BadRequestException(errorMessage);
 
         userService.update(user);

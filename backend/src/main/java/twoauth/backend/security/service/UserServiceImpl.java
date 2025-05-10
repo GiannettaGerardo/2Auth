@@ -1,9 +1,8 @@
 package twoauth.backend.security.service;
 
-import twoauth.backend.security.UserNotDeletedException;
-import twoauth.backend.security.UserNotFoundException;
-import twoauth.backend.security.UserNotSavedException;
-import twoauth.backend.security.UserNotUpdatedException;
+import twoauth.backend.exception.UserNotDeletedException;
+import twoauth.backend.exception.UserNotFoundException;
+import twoauth.backend.exception.UserNotUpdatedException;
 import twoauth.backend.security.model.User;
 import twoauth.backend.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,30 +15,24 @@ public class UserServiceImpl implements UserService
     private final UserRepository userRepository;
 
     @Override
-    public User.NoPasswordDto safeGetById(final String email) throws UserNotFoundException
+    public User.SecureDto safeGetById(final String email) throws UserNotFoundException
     {
         var user = userRepository.findById(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
 
-        return new User.NoPasswordDto(
+        return new User.SecureDto(
                 user.email(),
                 user.firstName(),
                 user.lastName(),
                 user.creation(),
                 user.lastUpdate(),
-                user.permissions()
+                user.permissions(),
+                user.isActive()
         );
     }
 
     @Override
-    public void save(final User user) throws UserNotSavedException
-    {
-        if (! userRepository.save(user))
-            throw new UserNotSavedException(user.getEmail());
-    }
-
-    @Override
-    public void update(final User.NoPasswordDto user) throws UserNotUpdatedException
+    public void update(final User.SecureDto user) throws UserNotUpdatedException
     {
         if (! userRepository.optimisticLockUpdate(user))
             throw new UserNotUpdatedException(user.email());
