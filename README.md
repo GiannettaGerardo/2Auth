@@ -5,7 +5,7 @@
   <a href="https://spring.io/"><img src="https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg" alt="Spring Boot Version"></a>
 </p>
 
-**2Auth** is a robust and comprehensive authentication and authorization solution built with Java Spring Boot 3.
+**2Auth** is a robust and comprehensive authentication and authorization solution built with Java Spring Boot 3 and MongoDB.
 
 ## Overview
 
@@ -19,24 +19,25 @@ the session in the API Gateway component, and to create, store and rotate the JW
 
 ### Key concepts
 
-1. Authentication with **Email** and **Password**. Password **hashing** and **salting**;
-2. Registration sends a secure unique token via **e-mail** to complete validate the email and the user. This behavior can be fully customized;
-3. API Gateway stores the Session in a HttpOnly cookie. The cookie is like that:
+1. All the connections must be under TLS v1.3 by default;
+2. Authentication with **Email** and **Password**. Password **hashing** and **salting**;
+3. Registration sends a secure unique token via **e-mail** to complete validate the email and the user. This behavior can be fully customized;
+4. API Gateway stores the Session in a HttpOnly cookie. The cookie is like that:
    - **__Host-** name prefix;
    - **Session ID** as value, 36 characters; 
    - **Path=/**; 
    - **HTTPOnly**; 
    - **SameSite=Strict**;
    - **Secure** if SSL is enabled.
-4. HttpOnly cookie protection with CSRF token (Double-Submit Cookie Pattern) with an additional BREACH attack protection (by Spring Security **XorCsrfTokenRequestAttributeHandler**). 
+5. HttpOnly cookie protection with CSRF token (Double-Submit Cookie Pattern) with an additional BREACH attack protection (by Spring Security **XorCsrfTokenRequestAttributeHandler**). 
 The token is generated and handled by the API Gateway;
-5. The *optional* filter **ChangeSessionId**, in the API Gateway, changes the Session ID at every http request;
-6. The *optional* filter **LogoutIfUnauthorized**, in the API Gateway, logs out the user and clears the user session if the proxied request returns a 401 UNAUTHORIZED response;
-7. **Logout** + **Complete-Logout** as separate endpoints. Complete-Logout invalidates each session of a user;
-8. Backend is stateless and handles Authentication and Authorization with **signed JWT** (Json Web Token). JWT are generated and signed by the Backend, then is stored in the Session by API Gateway;
+6. The *optional* filter **ChangeSessionId**, in the API Gateway, changes the Session ID at every http request;
+7. The *optional* filter **LogoutIfUnauthorized**, in the API Gateway, logs out the user and clears the user session if the proxied request returns a 401 UNAUTHORIZED response;
+8. **Logout** + **Complete-Logout** as separate endpoints. Complete-Logout invalidates each session of a user;
+9. Backend is stateless and handles Authentication and Authorization with **signed JWT** (Json Web Token). JWT are generated and signed by the Backend, then is stored in the Session by API Gateway;
 The **JwtTokenRelay** filter must be used, in the API Gateway, for requests proxied to the Backend to exchange the session cookie with the associated JWT and send it as Bearer Token to the Backend;
-9. The signed JWT has a customizable duration;
-10. The signing key for the JWT has a customizable rotation.
+10. The signed JWT has a customizable duration;
+11. The signing key for the JWT has a customizable rotation.
 
 ## Getting Started
 
@@ -79,6 +80,25 @@ You can customize the application changing directly the code, but there are some
       allowedHttpMethods: GET, POST, PUT, DELETE
       # This name is combined with the secure cookie prefix "__Host-". Default is XYZ_S.
       customSessionIdName: XYZ_S
+  
+    # ---- Must define these variables ----
+    server:
+      # API Gateway SSL/TLS configuration.
+      ssl:
+        key-store-type: ${SSL_KEY_STORE_TYPE}
+        key-store: ${SSL_KEY_STORE}
+        key-store-password: ${SSL_KEY_STORE_PASSWORD}
+        key-alias: ${SSL_KEY_ALIAS}
+  
+    spring:
+        cloud:
+          gateway:
+            # Backend SSL/TLS configuration, to proxy the requests to the Backend server.
+            httpclient:
+              ssl:
+                key-store: ${SSL_GATEWAY_KEY_STORE}
+                key-store-password: ${SSL_GATEWAY_KEY_STORE_PASSWORD}
+                key-store-type: ${SSL_GATEWAY_KEY_STORE_TYPE}
     ```
 - **Backend**
     ```yaml
@@ -91,6 +111,35 @@ You can customize the application changing directly the code, but there are some
         time-validity-in-millis: 28800000
         # Time before renewing the key used to sign JWTs (in milliseconds). Default is 24 hours.
         key-time-validity-in-millis: 86400000
+    
+    # ---- Must define these variables ----
+    server:
+      # Backend SSL/TLS configuration.
+      ssl:
+        key-store-type: ${SSL_KEY_STORE_TYPE}
+        key-store: ${SSL_KEY_STORE}
+        key-store-password: ${SSL_KEY_STORE_PASSWORD}
+        key-alias: ${SSL_KEY_ALIAS}
+  
+    spring:
+      # MongoDB SSL/TLS certificate configuration.
+      ssl:
+        bundle:
+          jks:
+            mongo:
+              truststore:
+                location: ${SSL_MONGO_TRUST_STORE}
+                password: ${SSL_MONGO_TRUST_STORE_PASSWORD}
+      # MongoDB authentication.
+      data:
+        mongodb:
+          username: ${DB_USERNAME}
+          password: ${DB_PASSWORD}
+          authentication-database: ${DB_AUTH_DB}
+      # E-Mail authentication.
+      mail:
+        username: ${MAIL}
+        password: ${MAIL_PASSWORD}
     ```
 
 How to use the special filters in the API Gateway application.yml file:
@@ -107,8 +156,6 @@ spring:
           - JwtTokenRelay # special filter
           - ChangeSessionId # special filter
           - LogoutIfUnauthorized # special filter
-          - StripPrefix=1
-          - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 ```
 
 ## REST API Endpoints

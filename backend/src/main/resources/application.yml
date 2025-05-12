@@ -11,6 +11,13 @@
     key-time-validity-in-millis: 86400000
 
 spring:
+  ssl:
+    bundle:
+      jks:
+        mongo:
+          truststore:
+            location: ${SSL_MONGO_TRUST_STORE}
+            password: ${SSL_MONGO_TRUST_STORE_PASSWORD}
   jackson:
     time-zone: 'Europe/Rome'
     date-format: 'dd-MM-yyyy HH:mm:ss'
@@ -30,6 +37,12 @@ spring:
       database: 2Auth
       port: 27017
       host: localhost
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      authentication-database: ${DB_AUTH_DB}
+      ssl:
+        enabled: true
+        bundle: mongo
   mail:
     host: smtp.gmail.com
     port: 587
@@ -50,7 +63,13 @@ server:
       enabled: false
     include-path: never
   ssl:
-    enabled: false
+    enabled: true
+    key-store-type: ${SSL_KEY_STORE_TYPE}
+    key-store: ${SSL_KEY_STORE}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-alias: ${SSL_KEY_ALIAS}
+    protocol: TLS
+    enabled-protocols: TLSv1.3
 
 logging:
   level:

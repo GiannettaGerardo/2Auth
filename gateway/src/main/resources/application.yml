@@ -18,7 +18,13 @@ server:
     whitelabel:
       enabled: false
   ssl:
-    enabled: false
+    enabled: true
+    key-store-type: ${SSL_KEY_STORE_TYPE}
+    key-store: ${SSL_KEY_STORE}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-alias: ${SSL_KEY_ALIAS}
+    protocol: TLS
+    enabled-protocols: TLSv1.3
 
 spring:
   mvc:
@@ -31,17 +37,22 @@ spring:
     name: 2auth-api-gateway
   cloud:
     gateway:
+      httpclient:
+        ssl:
+          key-store: ${SSL_GATEWAY_KEY_STORE}
+          key-store-password: ${SSL_GATEWAY_KEY_STORE_PASSWORD}
+          key-store-type: ${SSL_GATEWAY_KEY_STORE_TYPE}
       routes:
         - id: backend
-          uri: http://localhost:8081
+          uri: https://localhost:8081
           predicates:
             - Path=/api/**
           filters:
             - JwtTokenRelay
-            #- ChangeSessionId
+            - ChangeSessionId
             - LogoutIfUnauthorized
-            - StripPrefix=1
-            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            - StripPrefix=1 # optional
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin # optional
 
 logging:
   level:
