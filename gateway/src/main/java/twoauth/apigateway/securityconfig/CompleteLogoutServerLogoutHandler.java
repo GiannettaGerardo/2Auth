@@ -9,7 +9,7 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 import org.springframework.web.server.session.WebSessionStore;
 import reactor.core.publisher.Mono;
 
-public class CompleteLogoutServerLogoutHandler implements ServerLogoutHandler
+final class CompleteLogoutServerLogoutHandler implements ServerLogoutHandler
 {
     private final ReactiveSessionRegistry reactiveSessionRegistry;
     private final WebSessionStore webSessionStore;

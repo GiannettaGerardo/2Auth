@@ -12,23 +12,29 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 
-public class JwtAuthentication implements Authentication
+public final class JwtAuthentication implements Authentication
 {
     private boolean isAuthenticated;
     private final String jwt;
     private final String subject;
 
-    public JwtAuthentication(final String jwt, final ObjectMapper objectMapper) {
-        Assert.isTrue(jwt != null && !jwt.isBlank(), () -> "JWT cannot be null or blank.");
+    public JwtAuthentication(final String jwt, final ObjectMapper objectMapper)
+    {
+        Assert.notNull(jwt, () -> "JWT cannot be null");
+        Assert.isTrue(!jwt.isBlank(), () -> "JWT cannot be blank.");
+
         final String base64Payload = getJwtBase64PayloadSubstring(jwt);
         final String decodedPayload = new String(Base64.getUrlDecoder().decode(base64Payload));
         subject = extractSubjectFromPayload(decodedPayload, objectMapper);
-        Assert.isTrue(subject != null && !subject.isBlank(), () -> "JWT Subject cannot be null or blank.");
+
+        Assert.notNull(subject, () -> "JWT Subject cannot be null");
+        Assert.isTrue(!subject.isBlank(), () -> "JWT Subject cannot be blank.");
+
         this.jwt = jwt;
         isAuthenticated = true;
     }
 
-    private static String getJwtBase64PayloadSubstring(final String jwt) {
+    public static String getJwtBase64PayloadSubstring(final String jwt) {
         int first = -1, last = -1, len = jwt.length();
         for (int i = 0; i < len; ++i) {
             if (jwt.charAt(i) == '.') {
@@ -40,23 +46,25 @@ public class JwtAuthentication implements Authentication
                 }
             }
         }
-        if (first == -1 || last == -1)
-            throw new IllegalArgumentException("Cannot find two points . in JWT string.");
+
+        Assert.isTrue(first != -1 && last != -1, () -> "Cannot find two dots . in JWT string.");
+        Assert.isTrue(first+1 < last, () -> "Two dots are subsequent in the JWT string.");
 
         return jwt.substring(first+1, last);
     }
 
-    private static String extractSubjectFromPayload(final String payload, final ObjectMapper objectMapper) {
+    public static String extractSubjectFromPayload(final String payload, final ObjectMapper objectMapper) {
         try {
             JsonNode node = objectMapper.readTree(payload);
             node = node.get("sub");
-            if (node == null || !node.isTextual())
-                throw new IllegalArgumentException("JWT subject incorrect or not found.");
+
+            Assert.notNull(node, () -> "JWT subject not found.");
+            Assert.isTrue(node.isTextual(), () -> "JWT subject incorrect.");
+
             return node.textValue();
         }
-        catch (JsonProcessingException | IllegalArgumentException e) {
-            System.err.println("Something went wrong in parsing JWT.");
-            throw new IllegalStateException(e);
+        catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 

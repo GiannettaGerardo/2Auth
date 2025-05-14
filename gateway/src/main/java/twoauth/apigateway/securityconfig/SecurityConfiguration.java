@@ -45,11 +45,13 @@ class SecurityConfiguration
     private static final String COMPLETE_LOGOUT_PATH = "/complete-logout";
     private final List<HttpMethod> allowedHttpMethods;
 
-    public SecurityConfiguration(@Value("${2Auth.allowedHttpMethods:GET,POST,PUT,DELETE}") List<String> allowedHttpMethods) {
+    public SecurityConfiguration(
+            @Value("${2Auth.allowedHttpMethods:GET,POST,PUT,DELETE}") List<String> allowedHttpMethods
+    ) {
         this.allowedHttpMethods = getHttpMethod(allowedHttpMethods);
     }
 
-    private static List<HttpMethod> getHttpMethod(List<String> initialHttpMethods)
+    private static List<HttpMethod> getHttpMethod(final List<String> initialHttpMethods)
     {
         if (initialHttpMethods.isEmpty())
             return List.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE);

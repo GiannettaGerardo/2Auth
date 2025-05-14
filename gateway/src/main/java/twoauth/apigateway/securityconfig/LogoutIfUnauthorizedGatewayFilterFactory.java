@@ -27,7 +27,7 @@ import java.util.List;
  * If a proxied request returns 401 UNAUTHORIZED, this filter does a complete logout.
  */
 @Component
-public class LogoutIfUnauthorizedGatewayFilterFactory extends AbstractGatewayFilterFactory<Object>
+class LogoutIfUnauthorizedGatewayFilterFactory extends AbstractGatewayFilterFactory<Object>
 {
     private final ServerSecurityContextRepository securityContextRepository;
     private final CookieServerCsrfTokenRepository csrfTokenRepository;

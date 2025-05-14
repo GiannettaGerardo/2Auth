@@ -24,7 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
 @RestController
-public class AuthenticationController
+class AuthenticationController
 {
     private final URI registrationURI;
     private final URI loginURI;

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Component
-public class JwtTokenRelayGatewayFilterFactory extends AbstractGatewayFilterFactory<Object>
+class JwtTokenRelayGatewayFilterFactory extends AbstractGatewayFilterFactory<Object>
 {
     @Override
     public GatewayFilter apply(Object config)
