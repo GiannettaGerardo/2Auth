@@ -35,12 +35,12 @@ class AuthenticationController
     public AuthenticationController(
             @Value("${2Auth.backend-domain:localhost}") String backendDomain,
             @Value("${2Auth.backend-port:-1}") int backendPort,
-            @Value("${server.ssl.enabled:false}") boolean isHttpsEnabled,
+            @Value("${server.ssl.enabled:false}") boolean isSslEnabled,
             ServerSecurityContextRepository securityContextRepository,
             WebClient webClient,
             ObjectMapper objectMapper
     ) {
-        final String scheme = isHttpsEnabled ? "https" : "http";
+        final String scheme = isSslEnabled ? "https" : "http";
         try {
             registrationURI = new URI(scheme, null, backendDomain, backendPort, "/registration", null, null);
             loginURI = new URI(scheme, null, backendDomain, backendPort, "/login", null, null);
@@ -71,10 +71,8 @@ class AuthenticationController
                                 .map(wrapper -> new AuthBadRequestException(wrapper.error()))
                 )
                 .bodyToMono(Object.class)
-                .map(__ -> {
-                    user.eraseCredentials();
-                    return ResponseEntity.ok().build();
-                })
+                .thenReturn(ResponseEntity.ok().build())
+                .doOnSuccess(__ -> user.eraseCredentials())
                 .onErrorResume(e -> {
                     user.eraseCredentials();
                     if (e instanceof AuthBadRequestException)

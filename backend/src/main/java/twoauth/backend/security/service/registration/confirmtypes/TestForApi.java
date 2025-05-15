@@ -8,7 +8,7 @@ public final class TestForApi extends JwtsHS512Token
 
     @Override
     public boolean sendConfirmationRequest() {
-        System.out.printf("TestForFrontend: %s%n", this.uniqueSecureToken);
+        System.out.printf("TestForApi: %s%n", this.uniqueSecureToken);
         return true;
     }
 

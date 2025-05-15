@@ -30,7 +30,7 @@ public class AuthenticationController
         if (! registrationService.registration(user))
             throw new BadRequestException("User not registered.");
 
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
