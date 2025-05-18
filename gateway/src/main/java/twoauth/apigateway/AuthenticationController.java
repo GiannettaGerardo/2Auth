@@ -2,6 +2,7 @@ package twoauth.apigateway;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import twoauth.apigateway.model.AuthRequest;
+import twoauth.apigateway.model.ErrorWrapper;
 import twoauth.apigateway.model.JwtResponse;
 import twoauth.apigateway.model.User;
 import twoauth.apigateway.securityconfig.JwtAuthentication;
@@ -57,62 +58,65 @@ class AuthenticationController
     @PostMapping("/registration")
     public Mono<ResponseEntity<Object>> registration(@RequestBody final User user)
     {
-        return webClient.post()
-                .uri(registrationURI)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(user)
-                .accept(MediaType.APPLICATION_JSON)
-                .acceptCharset(Charset.defaultCharset())
-                .retrieve()
-                .onStatus(
-                        status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
-                        response -> response
-                                .bodyToMono(ErrorWrapper.class)
-                                .map(wrapper -> new AuthBadRequestException(wrapper.error()))
+        return handleBadRequestStatus(
+                    webClient.post()
+                        .uri(registrationURI)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(user)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .acceptCharset(Charset.defaultCharset())
+                        .retrieve()
                 )
                 .bodyToMono(Object.class)
                 .thenReturn(ResponseEntity.ok().build())
-                .doOnSuccess(__ -> user.eraseCredentials())
                 .onErrorResume(e -> {
-                    user.eraseCredentials();
                     if (e instanceof AuthBadRequestException)
                         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()));
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-                });
+                })
+                .doFinally(__ -> user.eraseCredentials());
+
     }
 
     @PostMapping("/login")
     public Mono<ResponseEntity<Object>> login(@RequestBody final AuthRequest request,
                                               final ServerWebExchange exchange) {
-        return webClient.post()
-                .uri(loginURI)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .accept(MediaType.APPLICATION_JSON)
-                .acceptCharset(Charset.defaultCharset())
-                .retrieve()
-                .onStatus(
-                        status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
-                        response -> response
-                                .bodyToMono(ErrorWrapper.class)
-                                .map(wrapper -> new AuthBadRequestException(wrapper.error()))
+        return handleBadRequestStatus(
+                    webClient.post()
+                        .uri(loginURI)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(request)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .acceptCharset(Charset.defaultCharset())
+                        .retrieve()
                 )
                 .bodyToMono(JwtResponse.class)
                 .flatMap(response -> {
-                    request.eraseCredentials();
                     final SecurityContext context = new SecurityContextImpl(new JwtAuthentication(response.jwt(), objectMapper));
                     return securityContextRepository.save(exchange, context)
                             .thenReturn(ResponseEntity.ok().build());
                 })
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid Jwt Response.")))
                 .onErrorResume(e -> {
-                    request.eraseCredentials();
                     if (e instanceof AuthBadRequestException)
                         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()));
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-                });
+                })
+                .doFinally(__ -> request.eraseCredentials());
     }
 
-    public record ErrorWrapper(
-            String error
-    ) {}
+    private WebClient.ResponseSpec handleBadRequestStatus(final WebClient.ResponseSpec request) {
+        return request.onStatus(
+                status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
+                response -> response
+                        .bodyToMono(ErrorWrapper.class)
+                        .filter(errorWrapper -> isValidString(errorWrapper.error()))
+                        .flatMap(errorWrapper -> Mono.just(new AuthBadRequestException(errorWrapper.error())))
+                        .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid Bad Request body.")))
+        );
+    }
+
+    private static boolean isValidString(final String str) {
+        return str != null && !str.isBlank();
+    }
 }

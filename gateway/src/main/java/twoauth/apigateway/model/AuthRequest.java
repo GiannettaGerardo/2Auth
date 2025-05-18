@@ -9,6 +9,12 @@ public final class AuthRequest implements CredentialsContainer {
 
     private AuthRequest() {}
 
+    public AuthRequest(String email, String password, String base64OTActivationToken) {
+        this.email = email;
+        this.password = password;
+        this.base64OTActivationToken = base64OTActivationToken;
+    }
+
     public String getEmail() {
         return email;
     }
