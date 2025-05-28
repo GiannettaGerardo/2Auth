@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import twoauth.backend.exception.BadRequestException;
 import twoauth.backend.security.model.AuthRequest;
 import twoauth.backend.security.model.JwtResponse;
+import twoauth.backend.security.model.StdJwtClaims;
 import twoauth.backend.security.model.User;
 import twoauth.backend.security.repository.UserSecurityRepository;
 
@@ -71,7 +72,7 @@ class JwtLoginService implements LoginService
                 .subject(userFromDB.getUsername())
                 .issuedAt(new Date(nowInMillis))
                 .expiration(new Date(nowInMillis + jwtTimeValidityInMillis))
-                .claim("permissions", userFromDB.getAuthorities()
+                .claim(StdJwtClaims.PERMISSIONS, userFromDB.getAuthorities()
                         .stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList())

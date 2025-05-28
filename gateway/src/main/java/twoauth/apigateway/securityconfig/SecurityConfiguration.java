@@ -18,12 +18,12 @@ import org.springframework.security.web.server.authorization.ServerAccessDeniedH
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.*;
-import static org.springframework.security.web.server.header.XFrameOptionsServerHttpHeadersWriter.Mode;
 
 import org.springframework.security.web.server.firewall.StrictServerWebExchangeFirewall;
 import org.springframework.security.web.server.header.ClearSiteDataServerHttpHeadersWriter;
 import static org.springframework.security.web.server.header.ClearSiteDataServerHttpHeadersWriter.Directive;
 
+import static org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy;
 import org.springframework.security.web.server.util.matcher.*;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
@@ -35,6 +35,7 @@ import org.springframework.web.server.session.WebSessionIdResolver;
 import org.springframework.web.server.session.WebSessionStore;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -80,8 +81,11 @@ class SecurityConfiguration
     ) {
         http
             .headers(headers -> headers
-                    .frameOptions(frameOptions -> frameOptions.mode(Mode.DENY))
-                    // TODO
+                    .hsts(opt -> opt
+                            .maxAge(Duration.ofSeconds(63072000))
+                            .includeSubdomains(true)
+                            .preload(true))
+                    .referrerPolicy(opt -> opt.policy(ReferrerPolicy.NO_REFERRER))
             )
             .csrf(csrf -> csrf
                     .requireCsrfProtectionMatcher(csrfRequestMatcher())

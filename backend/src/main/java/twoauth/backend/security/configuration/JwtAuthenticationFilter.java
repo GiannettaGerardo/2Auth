@@ -1,5 +1,6 @@
 package twoauth.backend.security.configuration;
 
+import twoauth.backend.security.model.StdJwtClaims;
 import twoauth.backend.security.service.JwtKeyStore;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -67,20 +68,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
             return;
         }
 
-        final String subject = payload.getSubject();
-        final var permissions = (ArrayList<String>) payload.get("permissions");
+        String subject;
+        if ((subject = safeGetSubject(payload)) == null) {
+            // don't trust the JWT!
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        System.out.println("Autenticato utente " + subject);
-        permissions.forEach(System.out::println);
-        System.out.println();
+        List<GrantedAuthority> permissions;
+        if ((permissions = safeGetPermissions(payload)) == null) {
+            // don't trust the JWT!
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        final var authToken = new UsernamePasswordAuthenticationToken(
-                subject,
-                null,
-                permissions.stream()
-                        .map(p -> (GrantedAuthority) new SimpleGrantedAuthority(p))
-                        .toList()
-        );
+        final var authToken = new UsernamePasswordAuthenticationToken(subject, null, permissions);
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
@@ -97,5 +99,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter
 
     private static boolean isJwsExpired(Date expiration) {
         return (expiration == null) || (new Date().compareTo(expiration) >= 0);
+    }
+
+    private static String safeGetSubject(final Claims payload) {
+        final String subject = payload.getSubject();
+        if (subject == null || subject.isBlank()) {
+            return null;
+        }
+        return subject;
+    }
+
+    private static List<GrantedAuthority> safeGetPermissions(final Claims payload) {
+        if (payload.get(StdJwtClaims.PERMISSIONS) instanceof ArrayList<?> arrayPermissions) {
+            final List<GrantedAuthority> grantedAuthorities = new ArrayList<>(arrayPermissions.size());
+            for (Object permission : arrayPermissions) {
+                if (permission instanceof String strPermission) {
+                    grantedAuthorities.add(new SimpleGrantedAuthority(strPermission));
+                }
+                else return null;
+            }
+            return grantedAuthorities;
+        }
+        else return null;
     }
 }
